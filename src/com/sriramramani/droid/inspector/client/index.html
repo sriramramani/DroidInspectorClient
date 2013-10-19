@@ -1,0 +1,152 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Droid Inspector</title>
+        <style>
+            /* INSERTFILE style.css */
+        </style>
+        <script type="text/javascript">
+            /* INSERTFILE mat4.js */
+        </script>
+        <script type="text/javascript">
+            /* INSERTFILE canvas.js */
+        </script>
+        <script type="text/javascript">
+            /* INSERTFILE box.js */
+        </script>
+        <script type="text/javascript">
+            /* INSERTFILE node.js  */
+        </script>
+        <script type="text/javascript">
+            /* INSERTFILE tree.js */
+        </script>
+        <!-- Fragment shader program -->
+        <script id="shader-fragment" type="x-shader/x-fragment">
+        precision mediump float;
+
+        uniform sampler2D sampler;
+
+        varying float vIsColor;
+        varying vec4 vColor;
+
+        void main() {
+            if (vIsColor > 0.5) {
+                gl_FragColor = vColor;
+            } else {
+                vec2 texture;
+                texture.x = vColor.x;
+                texture.y = vColor.y;
+                gl_FragColor = texture2D(sampler, texture);
+            }
+
+            if(gl_FragColor.a < 0.1) {
+                  discard;
+            }
+        }
+        </script>
+
+    <!-- Vertex shader program -->
+    <script id="shader-vertex" type="x-shader/x-vertex">
+      precision mediump float;
+
+      attribute vec3 vertex;
+      attribute vec4 color;
+
+      uniform float isColor;
+      uniform mat4 mvMatrix;
+      uniform mat4 projMatrix;
+
+      varying float vIsColor;
+      varying vec4 vColor;
+
+      void main(void) {
+        gl_Position = projMatrix * mvMatrix * vec4(vertex, 1.0);
+
+        vIsColor = isColor;
+        vColor = color;
+      }
+    </script>
+    </head>
+    <body>
+        <div id="left-pane">
+            <ul class="toolbar" id="canvas-toolbar">
+                <li><button class="selected" toggle="true" id="button-3d" event="Toggle:3D">3D</button></li>
+                <li><button class="selected" toggle="true" id="button-bounds" event="Toggle:Bounds">Bounds</button></li>
+                <li><button class="selected" toggle="true" id="button-depth" event="Toggle:Depth">Depth</button></li>
+                <li><button class="selected" toggle="true" id="button-overdraw" event="Toggle:Overdraw">Overdraw</button></li>
+                <li><button class="selected" toggle="true" id="button-splitcontent" event="Toggle:SplitContent">Split Content</button></li>
+                <li><button id="button-reset" event="Canvas:Reset">Reset</button></li>
+            </ul>
+            <div id="canvas-container">
+                <canvas id="canvas">Cannot support.</canvas>
+            </div>
+        </div>
+        <div id="right-pane">
+            <div id="top-right">
+                <ul class="toolbar" id="hierarchy-tree-toolbar">
+                    <li><button id="button-show-all" event="Tree:ShowAll">Show all</button></li>
+                    <li><button id="button-expand-all" event="Tree:ExpandAll">Expand all</button></li>
+                </ul>
+                <div id="hierarchy-tree-container">
+                    <ul id="hierarchy-tree"></ul>
+                </div>
+            </div>
+            <div id="bottom-right">
+                <ul class="toolbar" id="box-model-toolbar">
+                    <li class="expand" ><button id="button-background" event="Box:ToggleBackground">Background</button></li>
+                    <li class="expand"><button id="button-content" event="Box:ToggleContent">Content</button></li>
+                </ul>
+                <div id="box-model">
+                    <p id="margin-top" title="margin-top">0</p>
+                    <div id="box-model-margin">
+                        <p id="margin-left" title="margin-left">0</p>
+                        <div id="box-model-drawable-padding">
+                            <p id="drawable-padding-top" title="drawable-padding-top">0</p>
+                                <div id="box-model-internal-padding">
+                                    <p id="drawable-padding-left" title="drawable-padding-left">0</p>
+                                        <div id="box-model-bounds">
+                                            <p id="internal-padding-top" title="internal-padding-top">0</p>
+                                                <div id="box-model-bounds-inner">
+                                                    <p id="internal-padding-left" title="internal-padding-left">0</p>
+                                                    <p id="bounds" title="bounds">0 x 0</p>
+                                                    <p id="internal-padding-right" title="internal-padding-right">0</p>
+                                                </div>
+                                            <p id="internal-padding-bottom" title="internal-padding-bottom">0</p>
+                                        </div>
+                                    <p id="drawable-padding-right" title="drawable-padding-right">0</p>
+                                </div>
+                            <p id="drawable-padding-bottom" title="drawable-padding-bottom">0</p>
+                        </div>
+                        <p id="margin-right" title="margin-right">0</p>
+                    </div>
+                    <p id="margin-bottom" title="margin-bottom">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- more script -->
+        <script type="text/javascript">
+            /* DEVICEDATA */
+        </script>
+        <script type="text/javascript">
+            // Process the nodes and add 'moar' methods.
+            var node = processNodes(json, null);
+            node.calculateMaxBounds();
+            node.calculateDepth();
+
+            // Prepare the toolbar.
+            Toolbar.fromDomNode("canvas-toolbar");
+            Toolbar.fromDomNode("hierarchy-tree-toolbar");
+            Toolbar.fromDomNode("box-model-toolbar");
+
+            var canvas = new Canvas();
+            canvas.init(node);
+
+            var box = new Box("box-model");
+
+            var tree = new Tree();
+            tree.init("hierarchy-tree", node);
+        </script>
+    </body>
+</html>
