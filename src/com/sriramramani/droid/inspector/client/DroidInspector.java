@@ -56,7 +56,7 @@ public class DroidInspector {
                     try {
                     client.printData(output);
                     } catch (IOException e) {
-                        printError("Y U NO ADB FORWARD?", "Please enable adb forwarding. Usually:\nadb forward tcp:5000 tcp:4939");
+                        printError("Y U NO ADB FORWARD?", "Please enable adb forwarding. Usually:\nadb forward tcp:5555 tcp:5555");
                         throw new IOException(e);
                     }
                     output.write(";");
