@@ -12,13 +12,29 @@ import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
 
+/**
+ * DroidClient receives actual data from the client.
+ * <p />
+ * Creates a TCP socket to receive and print the UI hierarchy.
+ */
 public class DroidClient {
     private static final String LOCAL_HOST = "127.0.0.1";
     private static final int DEFAULT_LOCAL_PORT = 5555;
 
+    // Magic command to print the hierarchy.
     public static final String COMMAND_PRINT_HIERARCHY = "print json";
 
-    public void printData(OutputStreamWriter output) throws IOException {
+    // Error message.
+    public static final String ERROR_SERVER_NOT_RESPONDING = "Server not responding";
+
+    /**
+     * Prints the data from the app to a file.
+     *
+     * @param output The output stream to which the received data should be printed.
+     * @throws IOException
+     * @throws IllegalStateException
+     */
+    public void printData(OutputStreamWriter output) throws IOException, IllegalStateException {
         SocketChannel channel = SocketChannel.open();
         channel.connect(new InetSocketAddress(LOCAL_HOST, DEFAULT_LOCAL_PORT));
         channel.socket().setSoTimeout(15000);
@@ -28,12 +44,23 @@ public class DroidClient {
         writer.newLine();
         writer.flush();
 
-        System.out.println("Connecting with the device.");
+        System.out.println("Status: Connection with the device...");
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(channel.socket().getInputStream()), 8 * 1024);
+
+        boolean receivedData = false;
+
         String line = null;
         while ((line = reader.readLine()) != null) {
             output.write(line);
+
+            if (!receivedData) {
+                receivedData = true;
+            }
+        }
+
+        if (!receivedData) {
+            throw new IllegalStateException(ERROR_SERVER_NOT_RESPONDING);
         }
 
         writer.close();

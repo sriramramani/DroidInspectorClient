@@ -11,12 +11,42 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.HashMap;
+import java.util.Map;
 
+/**
+ * DroidInspector is the main class handling the user input.
+ */
 public class DroidInspector {
 
+    // Markers in static files to insert data.
     private static final String INSERTFILE = "INSERTFILE";
     private static final String DEVICEDATA = "DEVICEDATA";
 
+    private static final Map<String, String> ERRORS = new HashMap<String, String>(3);
+
+    static {
+        // TCP Errors.
+        ERRORS.put("Connection refused",
+                "Enable ADB Forwarding:\n    adb forward tcp:5555 tcp:5555");
+
+        ERRORS.put("Connection reset by peer",
+                "App is probably not running.\n" +
+                "Check if app has INTERNET permission.\n" +
+                "Check if the DroidInspector Server is running.");
+
+        // DroidInspector Errors.
+        ERRORS.put(DroidClient.ERROR_SERVER_NOT_RESPONDING,
+                "DroidInspector Server is not responding.\n" +
+                "Check if the activity is not paused.\n" +
+                "Check if there is a valid focused window.");
+    }
+
+    /**
+     * Entry point of the client.
+     *
+     * @param args The command line arguments.
+     */
     public static void main(String args[]) {
         DroidClient client = new DroidClient();
 
@@ -28,7 +58,6 @@ public class DroidInspector {
             printFile(client, output, "index.html");
             printSuccess();
         } catch (Exception e) {
-            e.printStackTrace();
         } finally {
             if (output != null) {
                 try {
@@ -38,7 +67,16 @@ public class DroidInspector {
         }
     }
 
+    /**
+     * Writes a given file to the disk.
+     *
+     * @param client The app that has DroidInspector server running.
+     * @param output The output stream of the file.
+     * @param file The name of the file.
+     * @throws Exception
+     */
     private static void printFile(DroidClient client, OutputStreamWriter output, String file) throws Exception {
+        // The file is usually a static file bundled with the jar.
         InputStream in = client.getClass().getResourceAsStream(file);
         BufferedReader fr = null;
         try {
@@ -54,10 +92,10 @@ public class DroidInspector {
                 } else if (line.contains(DEVICEDATA)) {
                     output.write("var json = ");
                     try {
-                    client.printData(output);
-                    } catch (IOException e) {
-                        printError("Y U NO ADB FORWARD?", "Please enable adb forwarding. Usually:\nadb forward tcp:5555 tcp:5555");
-                        throw new IOException(e);
+                        client.printData(output);
+                    } catch (Exception e) {
+                        printError(e.getMessage());
+                        throw new Exception(e);
                     }
                     output.write(";");
                 } else {
@@ -72,23 +110,36 @@ public class DroidInspector {
         }
     }
 
-    private static void printError(String message, String rectify) {
+    /**
+     * Prints an error message.
+     * @param message The error message.
+     */
+    private static void printError(String message) {
+        String errorMessage = "Error: " + message;
+        String rectify = ERRORS.get(message);
+
         System.out.println("----------------------------------------");
-        final int length = message.length();
+        final int length = errorMessage.length();
         if (length < 40) {
-            for (int i = 0; i < length/2; i++, System.out.print(" "));
+            for (int i = 0; i < (40 - length)/2; i++, System.out.print(" "));
         }
-        System.out.println(message);
+        System.out.println(errorMessage);
         System.out.println("----------------------------------------");
-        System.out.println(rectify);
-        System.out.println("----------------------------------------");
+
+        if (rectify != null) {
+            System.out.println(rectify);
+            System.out.println("----------------------------------------");
+        }
     }
 
+    /**
+     * Prints a success message.
+     */
     private static void printSuccess() {
         System.out.println("****************************************");
-        System.out.println("\nUI dump file created successfully.");
+        System.out.println("UI dump file created successfully.");
         System.out.println("Open droid-inspector.html (in current");
-        System.out.println("directory) to view the results.\n");
+        System.out.println("directory) to view the results.");
         System.out.println("****************************************");
     }
 }
