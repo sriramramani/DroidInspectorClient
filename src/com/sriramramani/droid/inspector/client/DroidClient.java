@@ -19,7 +19,7 @@ import java.nio.channels.SocketChannel;
  */
 public class DroidClient {
     private static final String LOCAL_HOST = "127.0.0.1";
-    private static final int DEFAULT_LOCAL_PORT = 5555;
+    public static final int DEFAULT_LOCAL_PORT = 5555;
 
     // Magic command to print the hierarchy.
     public static final String COMMAND_PRINT_HIERARCHY = "print json";
@@ -34,9 +34,9 @@ public class DroidClient {
      * @throws IOException
      * @throws IllegalStateException
      */
-    public void printData(OutputStreamWriter output) throws IOException, IllegalStateException {
+    public void printData(OutputStreamWriter output, int localPort) throws IOException, IllegalStateException {
         SocketChannel channel = SocketChannel.open();
-        channel.connect(new InetSocketAddress(LOCAL_HOST, DEFAULT_LOCAL_PORT));
+        channel.connect(new InetSocketAddress(LOCAL_HOST, localPort));
         channel.socket().setSoTimeout(15000);
 
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(channel.socket().getOutputStream()));

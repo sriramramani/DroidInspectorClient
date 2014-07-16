@@ -23,9 +23,24 @@ public class DroidInspector {
     private static final String INSERTFILE = "INSERTFILE";
     private static final String DEVICEDATA = "DEVICEDATA";
 
-    private static final Map<String, String> ERRORS = new HashMap<String, String>(3);
+    private static final String ARG_FILE = "--file";
+    private static final String ARG_LOCAL_PORT = "--local-port";
+    private static final String ARG_HELP = "--help";
+
+    private static final String ERROR_NO_FILENAME = "No file specified";
+    private static final String ERROR_NO_LOCAL_PORT = "No local port specified";
+
+    private static final Map<String, String> ERRORS = new HashMap<String, String>();
 
     static {
+        // Command line errors.
+        ERRORS.put(ERROR_NO_FILENAME,
+                "Specify a valid filename");
+
+        ERRORS.put(ERROR_NO_LOCAL_PORT,
+                "Specify a valid local port\n" +
+                "used in the ADB FORWARD");
+
         // TCP Errors.
         ERRORS.put("Connection refused",
                 "Enable ADB Forwarding:\n    adb forward tcp:5555 tcp:5555");
@@ -42,15 +57,23 @@ public class DroidInspector {
                 "Check if there is a valid focused window.");
     }
 
+    private static String sFileName = "./droid-inspector.html";
+    private static int sLocalPort = DroidClient.DEFAULT_LOCAL_PORT;
+
     /**
      * Entry point of the client.
      *
      * @param args The command line arguments.
      */
     public static void main(String args[]) {
+        // Parse the arguments.
+        if (!parseArguments(args)) {
+            return;
+        }
+
         DroidClient client = new DroidClient();
 
-        File file = new File(".", "droid-inspector.html");
+        File file = new File(sFileName);
         OutputStreamWriter output = null;
 
         try {
@@ -65,6 +88,42 @@ public class DroidInspector {
                 } catch (IOException e) { }
             }
         }
+    }
+
+    /**
+     * Parses the command line arguments.
+     * @param args The command line arguments.
+     * @return true if the parsing was successful.
+     */
+    private static boolean parseArguments(String args[]) {
+        for (int i = 0; i < args.length; ) {
+            String arg = args[i];
+            if (ARG_FILE.equals(arg)) {
+                if (i+1 < args.length) {
+                    sFileName = args[i+1];
+                    i+=2;
+                } else {
+                    printError(ERROR_NO_FILENAME);
+                    return false;
+                }
+            } else if (ARG_LOCAL_PORT.equals(arg)) {
+                if (i+1 < args.length) {
+                    sLocalPort = Integer.parseInt(args[i+1]);
+                    i+=2;
+                } else {
+                    printError(ERROR_NO_LOCAL_PORT);
+                    return false;
+                }
+            } else if (ARG_HELP.equals(arg)) {
+                printHelp();
+                return false;
+            } else {
+                printHelp();
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -92,7 +151,7 @@ public class DroidInspector {
                 } else if (line.contains(DEVICEDATA)) {
                     output.write("var json = ");
                     try {
-                        client.printData(output);
+                        client.printData(output, sLocalPort);
                     } catch (Exception e) {
                         printError(e.getMessage());
                         throw new Exception(e);
@@ -138,8 +197,18 @@ public class DroidInspector {
     private static void printSuccess() {
         System.out.println("****************************************");
         System.out.println("UI dump file created successfully.");
-        System.out.println("Open droid-inspector.html (in current");
-        System.out.println("directory) to view the results.");
+        System.out.println("Open " + sFileName +  " to view the results.");
         System.out.println("****************************************");
+    }
+
+    /**
+     * Prints a help message.
+     */
+    private static void printHelp() {
+        System.out.println("Usage: java -jar droidinspectorclient.jar [--file filename] [--local-port local-port]");
+        System.out.println("--file          - specify an alternative file name");
+        System.out.println("--local-port    - specify an alternative local-port used for adb forward");
+        System.out.println("                  adb forward tcp:xxxx tcp:5555");
+        System.out.println("--help          - prints this help message");
     }
 }
