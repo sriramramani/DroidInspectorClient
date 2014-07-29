@@ -43,7 +43,7 @@ public class DroidInspector {
 
         // TCP Errors.
         ERRORS.put("Connection refused",
-                "Enable ADB Forwarding:\n    adb forward tcp:5555 tcp:5555");
+                "Enable ADB Forwarding:\n    adb forward tcp:4545 tcp:4545");
 
         ERRORS.put("Connection reset by peer",
                 "App is probably not running.\n" +
@@ -208,7 +208,7 @@ public class DroidInspector {
         System.out.println("Usage: java -jar droidinspectorclient.jar [--file filename] [--local-port local-port]");
         System.out.println("--file          - specify an alternative file name");
         System.out.println("--local-port    - specify an alternative local-port used for adb forward");
-        System.out.println("                  adb forward tcp:xxxx tcp:5555");
+        System.out.println("                  adb forward tcp:xxxx tcp:4545");
         System.out.println("--help          - prints this help message");
     }
 }
